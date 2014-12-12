@@ -1,14 +1,25 @@
 #!/bin/bash
 
-#display cursor again at EXIT
-unhide_cursor() {
-    printf '\e[?25h'
-    clear
+if [ "$(whoami)" != "root" ];
+then
+	echo ""
+	echo "    ERROR: Please run this script as the root user";
+	echo ""
+	exit;
+fi
+
+back_to_normal() {
+	echo 1 > /sys/devices/odroid_fan.14/fan_mode;
+	printf '\e[?25h';
+	clear;
 }
 
-trap unhide_cursor EXIT;
+trap back_to_normal EXIT;
 
 MODEL=$(cat /proc/cpuinfo | grep Hardware | awk '{print $3}');
+
+FAN_MODE_AUTO=1
+FAN_MODE_MANUAL=0
 
 SYS_FAN_MODE="/sys/devices/platform/odroidu2-fan/fan_mode";
 SYS_PWM_DUTY="/sys/devices/platform/odroidu2-fan/pwm_duty";
@@ -20,6 +31,9 @@ then
 	SYS_PWM_DUTY="/sys/devices/odroid_fan.14/pwm_duty";
 	SYS_TEMP="/sys/devices/virtual/thermal/thermal_zone0/temp";
 fi
+
+# Always set to manual first
+echo $FAN_MODE_MANUAL > $SYS_FAN_MODE;
 
 last=0
 last_temp=0
@@ -50,6 +64,9 @@ while true; do
 	echo $mean
 	echo ${mean%.*}
 
+	echo "FAN_MODE: "$(<${SYS_FAN_MODE});
+	echo "================================================";
+
 	var=${mean%.*}
 
 	if [ $var -lt 60000 ] && [ $var -gt 50000 ];
@@ -61,7 +78,7 @@ while true; do
 		fi
 
 		last=1
-		echo manual > $SYS_FAN_MODE;
+		echo $FAN_MODE_MANUAL > $SYS_FAN_MODE;
 
 		echo 100 > $SYS_PWM_DUTY;
 		sleep 1
@@ -78,7 +95,7 @@ while true; do
 
 		last=2
 
-		echo auto > $SYS_FAN_MODE;
+		echo $FAN_MODE_AUTO > $SYS_FAN_MODE;
 		echo "auto"
 	fi
 done
