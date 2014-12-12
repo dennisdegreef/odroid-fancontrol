@@ -24,6 +24,7 @@ back_to_normal() {
 trap back_to_normal EXIT;
 
 # Generic variables
+INTERVAL=1
 MODEL=$(cat /proc/cpuinfo | grep Hardware | awk '{print $3}');
 LOGFILE="/var/log/temperature"
 
@@ -59,14 +60,12 @@ var=100000
 
 mean=80000
 
-#hide cursor
-printf '\e[?25l'
-clear
+# Enter infinite loop
+while :; do
 
-while true; do
-	#move cursor to top
-	printf '\033[;H'
-	sleep 1
+	# Sleep for the given interval
+	sleep ${INTERVAL};
+
 	last_temp=$var
 	var=$(< $SYS_TEMP)
 	current_speed=$(< $SYS_PWM_DUTY);
@@ -116,4 +115,5 @@ while true; do
 		echo $FAN_MODE_AUTO > $SYS_FAN_MODE;
 		echo "auto"
 	fi
+
 done
