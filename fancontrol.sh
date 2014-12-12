@@ -1,5 +1,10 @@
 #!/bin/bash
+#
+# This script is part of the following repository
+# https://github.com/dennisdegreef/odroid-fancontrol
+#
 
+# Check for root permissions
 if [ "$(whoami)" != "root" ];
 then
 	echo ""
@@ -8,23 +13,30 @@ then
 	exit;
 fi
 
+# Trap function
 back_to_normal() {
 	echo 1 > /sys/devices/odroid_fan.14/fan_mode;
 	printf '\e[?25h';
 	clear;
 }
 
+# Trap certain signals
 trap back_to_normal EXIT;
 
+# Generic variables
 MODEL=$(cat /proc/cpuinfo | grep Hardware | awk '{print $3}');
+LOGFILE="/var/log/temperature"
 
+# Fan mode interpretations
 FAN_MODE_AUTO=1
 FAN_MODE_MANUAL=0
 
+# Locations of the sysfs files
 SYS_FAN_MODE="/sys/devices/platform/odroidu2-fan/fan_mode";
 SYS_PWM_DUTY="/sys/devices/platform/odroidu2-fan/pwm_duty";
 SYS_TEMP="/sys/devices/virtual/thermal/thermal_zone0/temp";
 
+# The sysfs locations for the XU3 are different
 if [ "x${MODEL}" == "xODROID-XU3" ];
 then
 	SYS_FAN_MODE="/sys/devices/odroid_fan.14/fan_mode";
@@ -34,6 +46,12 @@ fi
 
 # Always set to manual first
 echo $FAN_MODE_MANUAL > $SYS_FAN_MODE;
+
+# Create initial logfile if not present
+if [ ! -f $LOGFILE ];
+then
+	touch $LOGFILE;
+fi
 
 last=0
 last_temp=0
