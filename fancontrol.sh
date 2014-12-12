@@ -55,8 +55,8 @@ then
 fi
 
 last=0
-last_temp=0
-var=100000
+
+TEMPERATURE=100000
 
 mean=80000
 
@@ -66,16 +66,16 @@ while :; do
 	# Sleep for the given interval
 	sleep ${INTERVAL};
 
-	last_temp=$var
-	var=$(< $SYS_TEMP)
+
+	TEMPERATURE=$(< $SYS_TEMP);
 	current_speed=$(< $SYS_PWM_DUTY);
-	echo $var
+	echo $TEMPERATURE;
 
 	#echo "$var,${current_speed:22:3}" >> history
 
-	echo $last
+	echo $last;
 
-	mean=$(echo "$mean/10*9+$var/10" |bc -l)
+	mean=$(echo "$mean / 10 * 9 + ${TEMPERATURE} / 10" |bc -l)
 
 
 	echo $mean
@@ -86,10 +86,10 @@ while :; do
 
 	var=${mean%.*}
 
-	if [ $var -lt 60000 ] && [ $var -gt 50000 ];
+	if [ $TEMPERATURE -lt 60000 ] && [ $TEMPERATURE -gt 50000 ];
 	then
 
-		if [ $last -eq 1 ] || ( [ $last -eq 2 ] && [ $var -le 54000 ] );
+		if [ $last -eq 1 ] || ( [ $last -eq 2 ] && [ $TEMPERATURE -le 54000 ] );
 		then
 			continue
 		fi
